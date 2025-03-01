@@ -12,7 +12,7 @@ SERVICE_NAME="Internet Indicator"
 
 function login () {
     ipmodem=192.168.8.1
-    pass=$(echo -e "admin123")
+    pass=$(echo -e "admin")
     data=$(curl -s http://$ipmodem/api/webserver/SesTokInfo -H "Host: $ipmodem" -H "Connection: keep-alive" -H "Accept: */*" -H "X-Requested-With: XMLHttpRequest" -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36" -H "Referer: http://$ipmodem/html/home.html" -H "Accept-Encoding: gzib, deflate" -H "Accept-Language: id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7")
     sesi=$(echo "$data" | grep "SessionID=" | cut -b 10-147)
     token=$(echo "$data" | grep "TokInfo" | cut -b 10-41)
@@ -97,7 +97,7 @@ function loop() {
         else
             bledon -lan off
             count=$((count+1))
-            sleep 5
+            sleep 1
         fi
         # if led is red in 2 times
         if [ $count -ge 2 ]
@@ -105,10 +105,23 @@ function loop() {
             # findNewIP
             reboot
             sleep 10
-            count=0
+            isConnectToModem
+            break
         fi
         sleep 2
     done
+}
+
+function isConnectToModem() {
+  bledon -lan dis
+  sleep 1
+  if ! ping -c 1 192.168.8.1 >/dev/null 2>&1; then
+    bledon -lan warn
+    sleep 1
+    isConnectToModem
+  else
+    loop
+  fi
 }
 
 function start() {
@@ -138,6 +151,12 @@ case "${1}" in
     ;;
     -s)
         stop
+    ;;
+    -rr)
+        reboot
+    ;;
+    -lo)
+        login
     ;;
     *)
         usage
