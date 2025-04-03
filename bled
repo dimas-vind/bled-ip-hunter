@@ -120,7 +120,7 @@ function isConnectToModem() {
     sleep 1
     isConnectToModem
   else
-    loop
+    start
   fi
 }
 
